@@ -1,5 +1,24 @@
 {
   "dependencies": {
-    "discord.js": "^12.5.1"
-  }
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0",
+    "nodemon": "^2.0.7"
+  },
+  "name": "crossover-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BielMaxBR/crossover-bot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BielMaxBR/crossover-bot/issues"
+  },
+  "homepage": "https://github.com/BielMaxBR/crossover-bot#readme",
+  "description": ""
 }

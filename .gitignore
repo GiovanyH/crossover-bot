@@ -1,3 +1,5 @@
+tests/
+.theia/
 # Logs
 logs
 *.log
