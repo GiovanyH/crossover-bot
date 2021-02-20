@@ -73,7 +73,7 @@ client.on("message", async message =>{
                     pegarHook(channel).then(async hook =>{
                         if (!hook) return;
                         const avatar = message.author.avatarURL()
-                        const user = message.author.username
+                        const user = "<"+server.name+"> "+message.author.username
                         await hook.send(message.content, {
                             username: user,
                             avatarURL: avatar,
@@ -101,7 +101,7 @@ function criarHook(channel) {
 }
 
 function pegarHook(channel) {
-    channel.fetchWebhooks()
+    return channel.fetchWebhooks()
         .then(hooks => {
             // checa os webhooks pra achar o do crossover
             for (var value of hooks.values()) {
