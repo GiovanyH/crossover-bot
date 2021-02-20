@@ -73,7 +73,7 @@ client.on("message", async message =>{
                     pegarHook(channel).then(async hook =>{
                         if (!hook) return;
                         const avatar = message.author.avatarURL()
-                        const user = "<"+server.name+"> "+message.author.username
+                        const user = "<"+message.guild.name+"> "+message.author.username
                         await hook.send(message.content, {
                             username: user,
                             avatarURL: avatar,
