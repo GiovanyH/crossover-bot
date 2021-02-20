@@ -1,4 +1,4 @@
-const { Client } = require("discord.js");
+const { Client, MessageEmbed } = require("discord.js");
 const client = new Client(); 
 require('dotenv').config();
 
@@ -49,6 +49,12 @@ client.on("message", async message =>{
                     if(!configuredServers[message.guild.id]) {
                         configuredServers[message.guild.id] = message.channel.id
                         await message.channel.send("este chat foi conectado com o crossover")
+                        // Fetch webhooks
+                        pegarHook(message.channel).then(hook =>{
+                            if (hook) return;
+                            criarHook(message.channel)
+                        })
+                        
                     } else {
                         await message.channel.send("este chat já está no crossover '-' ")
                     }
@@ -64,11 +70,47 @@ client.on("message", async message =>{
                 if (key != message.guild.id) {
                     const server = client.guilds.cache.get(key)
                     const channel = server.channels.cache.get(value)
-                    await channel.send(message.author.username+": "+message.content)
+                    pegarHook(channel).then(async hook =>{
+                        if (!hook) return;
+                        const avatar = message.author.avatarURL()
+                        const user = message.author.username
+                        await hook.send(message.content, {
+                            username: user,
+                            avatarURL: avatar,
+                        });
+                        
+                    })                     
 
                 }
             }
         }
 })
 
+function criarHook(channel) {
+    channel.createWebhook('crossover-bot', {
+        avatar: 'https://i.pinimg.com/originals/d7/96/3b/d7963b33fec9c7eea90be6cc52bc0c06.png',
+    })
+    .then(async webhook => {
+        const avatarBot = client.user.avatarURL()
+        await webhook.send('eu sou o crossover', {
+            username: 'ohayo',
+            avatarURL: avatarBot,
+        });
+    })
+    .catch(console.error);
+}
+
+function pegarHook(channel) {
+    channel.fetchWebhooks()
+        .then(hooks => {
+            // checa os webhooks pra achar o do crossover
+            for (var value of hooks.values()) {
+                if (value.name == "crossover-bot") { 
+                    return new Promise((res) =>{res(value)})
+                }
+            }
+            return new Promise((res) =>{res(null)})
+        })
+        .catch(console.error);
+}
 client.login(process.env.TOKEN);
