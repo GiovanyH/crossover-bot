@@ -1,6 +1,7 @@
-const { Client, MessageEmbed } = require("discord.js");
-const client = new Client(); 
-require('dotenv').config();
+const fs = require("fs")
+const { Client, MessageEmbed, Collection } = require("discord.js")
+const client = new Client()
+require('dotenv').config()
 
 let config = {
     prefix: "c:"
@@ -9,6 +10,16 @@ let config = {
 let totalServers = []
 
 let configuredServers = []
+
+client.commands = new Collection()
+
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'))
+
+for (const file of commandFiles) {
+    const command = require(`./commands/${file}`)
+    console.log(command.name)
+    client.commands.set(command.name, command)
+}
 
 client.on("ready", async () =>  {
     var getGuilds = new Promise((resolve,reject)=>{
@@ -29,37 +40,14 @@ client.on("message", async message =>{
 
         const comando = args.shift().toLowerCase()
 
-        if(message.content.indexOf(config.prefix) == 0) { 
-            switch(comando){
-                case "ping":
-                    const m = await message.channel.send("Ping?");
-                    console.log("ping")
-                    m.edit(`Pong! A Latência é ${m.createdTimestamp - message.createdTimestamp}ms.`);
-                    break;
+        if(message.content.indexOf(config.prefix) == 0) {
+            if (!client.commands.has(comando)) return
 
-                case "servers":
-                    let names = []
-                    for ( guild in totalServers ) {
-                        names.push(totalServers[guild].name)
-                    }
-                    message.channel.send("Servers: "+names)
-                    break; 
-
-                case "connect":
-                    if(!configuredServers[message.guild.id]) {
-                        configuredServers[message.guild.id] = message.channel.id
-                        await message.channel.send("este chat foi conectado com o crossover")
-                        // Fetch webhooks
-                        pegarHook(message.channel).then(hook =>{
-                            if (hook) return;
-                            criarHook(message.channel)
-                        })
-                        
-                    } else {
-                        await message.channel.send("este chat já está no crossover '-' ")
-                    }
-                break;
-
+            try {
+                client.commands.get(comando).execute(client, message, configuredServers, totalServers)
+            } catch (error) {
+                console.error(error)
+                message.reply('Aconteceu um erro ao executar esse comando!');
             }
         }
 
@@ -70,7 +58,8 @@ client.on("message", async message =>{
                 if (key != message.guild.id) {
                     const server = client.guilds.cache.get(key)
                     const channel = server.channels.cache.get(value)
-                    pegarHook(channel).then(async hook =>{
+                    const WebhooksFn = require('./WebhooksFn.js')
+                    WebhooksFn.pegarHook(channel).then(async hook =>{
                         if (!hook) return;
                         const avatar = message.author.avatarURL()
                         const user = "<"+message.guild.name+"> "+message.author.username
@@ -79,38 +68,10 @@ client.on("message", async message =>{
                             avatarURL: avatar,
                         });
                         
-                    })                     
+                    })
 
                 }
             }
         }
 })
-
-function criarHook(channel) {
-    channel.createWebhook('crossover-bot', {
-        avatar: 'https://i.pinimg.com/originals/d7/96/3b/d7963b33fec9c7eea90be6cc52bc0c06.png',
-    })
-    .then(async webhook => {
-        const avatarBot = client.user.avatarURL()
-        await webhook.send('eu sou o crossover', {
-            username: 'ohayo',
-            avatarURL: avatarBot,
-        });
-    })
-    .catch(console.error);
-}
-
-function pegarHook(channel) {
-    return channel.fetchWebhooks()
-        .then(hooks => {
-            // checa os webhooks pra achar o do crossover
-            for (var value of hooks.values()) {
-                if (value.name == "crossover-bot") { 
-                    return new Promise((res) =>{res(value)})
-                }
-            }
-            return new Promise((res) =>{res(null)})
-        })
-        .catch(console.error);
-}
-client.login(process.env.TOKEN);
+client.login(process.env.TOKEN)
